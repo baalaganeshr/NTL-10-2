@@ -28,7 +28,8 @@ header h1{font-family:'Orbitron',sans-serif;font-size:clamp(1.1rem,4.2vw,1.8rem)
 header p{font-size:11px;color:var(--muted);margin-top:6px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;line-height:1.45;}
 .badge{display:inline-block;background:rgba(0,170,255,0.1);border:1px solid var(--accent);
   color:var(--accent);font-size:9px;font-family:'Share Tech Mono',monospace;
-  padding:4px 10px;border-radius:3px;letter-spacing:1.4px;margin-top:10px;line-height:1.4;}
+  padding:4px 10px;border-radius:3px;letter-spacing:1.4px;margin-top:10px;line-height:1.4;
+  max-width:100%;word-break:break-word;}
 
 /* LAYOUT */
 .main-grid{display:grid;grid-template-columns:minmax(300px,340px) minmax(0,1fr);gap:16px;}
@@ -85,7 +86,7 @@ header p{font-size:11px;color:var(--muted);margin-top:6px;font-family:'Share Tec
 .result-unit{font-size:9px;color:var(--muted);}
 
 /* STATUS */
-.status-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;
+.status-bar{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;
   border-radius:6px;margin-top:10px;font-size:11px;font-family:'Share Tech Mono',monospace;line-height:1.45;}
 .status-bar.propagate{background:rgba(0,255,204,0.08);border:1px solid var(--te);color:var(--te);}
 .status-bar.evanescent{background:rgba(255,107,53,0.08);border:1px solid var(--tm);color:var(--tm);}
@@ -97,7 +98,7 @@ header p{font-size:11px;color:var(--muted);margin-top:6px;font-family:'Share Tec
   background:transparent;color:var(--muted);font-family:'Share Tech Mono',monospace;
   font-size:10px;cursor:pointer;transition:all 0.2s;letter-spacing:1px;min-height:38px;}
 .viz-tab.active{background:rgba(0,170,255,0.12);border-color:var(--accent);color:var(--accent);}
-canvas{width:100%;height:clamp(230px,48vw,340px);border-radius:8px;background:#020810;border:1px solid var(--border);display:block;}
+canvas{width:100%;height:clamp(220px,48vw,340px);border-radius:8px;background:#020810;border:1px solid var(--border);display:block;}
 
 /* MODE TABLE */
 .mode-table-wrap{margin-top:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
@@ -125,12 +126,37 @@ footer{text-align:center;font-size:10px;color:var(--muted);
   padding:20px 0 0;font-family:'Share Tech Mono',monospace;border-top:1px solid var(--border);margin-top:24px;line-height:1.5;}
 
 @media(max-width:560px){
+  .wrap{padding:10px 10px 14px;}
   .panel{padding:12px;}
+  .panel-title{font-size:8px;letter-spacing:2px;}
   .input-row{grid-template-columns:1fr;gap:8px;}
   .mode-grid{grid-template-columns:1fr;}
   .results-grid{grid-template-columns:1fr;}
+  .input-group input[type=number],.input-group select{font-size:16px;}
+  .viz-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .viz-tab{width:100%;padding:9px 8px;font-size:9px;letter-spacing:.5px;}
+  .viz-tab:last-child{grid-column:1/-1;}
+  canvas{height:240px;}
+  table{min-width:0;font-size:10px;}
+  thead th:nth-child(2),
+  thead th:nth-child(3),
+  thead th:nth-child(5),
+  tbody td:nth-child(2),
+  tbody td:nth-child(3),
+  tbody td:nth-child(5){display:none;}
+  th,td{padding:6px 6px;}
+  .status-bar{font-size:10px;padding:8px 10px;}
   header{padding:12px 0 16px;}
-  .badge{font-size:8px;letter-spacing:1px;}
+  header p{font-size:10px;}
+  .badge{font-size:8px;letter-spacing:.7px;padding:4px 7px;}
+}
+
+@media(max-width:380px){
+  .wrap{padding:8px;}
+  .panel{padding:10px;}
+  .result-val{font-size:14px;}
+  .calc-btn{letter-spacing:1.3px;font-size:10px;}
+  canvas{height:220px;}
 }
 </style>
 </head>
@@ -345,7 +371,7 @@ function buildModeTable(a,b,f,er){
 function prepareCanvas(){
   const canvas=document.getElementById('mainCanvas');
   const dpr=window.devicePixelRatio||1;
-  const W=Math.max(280,Math.floor(canvas.clientWidth||600));
+  const W=Math.max(250,Math.floor(canvas.clientWidth||600));
   const H=Math.max(220,Math.floor(canvas.clientHeight||320));
   canvas.width=W*dpr;
   canvas.height=H*dpr;
@@ -486,7 +512,7 @@ function drawDispersion(){
   ctx.fillStyle='#00ffcc';ctx.font='10px Share Tech Mono';
   ctx.fillText('β (phase constant)',pad+6,pad+14);
   ctx.fillStyle='rgba(0,170,255,0.5)';
-  ctx.fillText('Light line (free space)',W-pad-130,pad+14);
+  ctx.fillText('Light line (free space)',Math.max(pad+90,W-pad-130),pad+14);
   ctx.fillStyle='rgba(0,170,255,0.5)';ctx.font='9px Share Tech Mono';
   ctx.fillText('f (GHz) →',W-pad-40,H-pad+14);
   ctx.save();ctx.translate(14,H/2);ctx.rotate(-Math.PI/2);
