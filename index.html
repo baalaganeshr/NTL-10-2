@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Waveguide Mode Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#050a0f;--panel:#0a1520;--panel2:#0f1e2e;--border:#1a3a5c;
+  --accent:#00aaff;--a2:#00ffcc;--a3:#ff6b35;--a4:#ffd700;
+  --te:#00ffcc;--tm:#ff6b35;--text:#cce8ff;--muted:#4a7a9b;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,170,255,0.06),transparent),
+             radial-gradient(ellipse 60% 40% at 100% 100%,rgba(0,255,204,0.04),transparent);
+  pointer-events:none;z-index:0;}
+
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:clamp(12px,2.6vw,20px) clamp(12px,3.5vw,16px);}
+
+/* HEADER */
+header{text-align:center;padding:16px 0 20px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+header h1{font-family:'Orbitron',sans-serif;font-size:clamp(1.1rem,4.2vw,1.8rem);font-weight:900;
+  color:var(--accent);letter-spacing:2px;text-transform:uppercase;
+  text-shadow:0 0 30px rgba(0,170,255,0.5);line-height:1.25;}
+header p{font-size:11px;color:var(--muted);margin-top:6px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;line-height:1.45;}
+.badge{display:inline-block;background:rgba(0,170,255,0.1);border:1px solid var(--accent);
+  color:var(--accent);font-size:9px;font-family:'Share Tech Mono',monospace;
+  padding:4px 10px;border-radius:3px;letter-spacing:1.4px;margin-top:10px;line-height:1.4;}
+
+/* LAYOUT */
+.main-grid{display:grid;grid-template-columns:minmax(300px,340px) minmax(0,1fr);gap:16px;}
+@media(max-width:980px){.main-grid{grid-template-columns:1fr;}}
+
+/* PANEL */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.panel-title{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:600;
+  letter-spacing:3px;text-transform:uppercase;color:var(--accent);
+  margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;}
+.panel-title::before{content:'';width:6px;height:6px;background:var(--accent);
+  border-radius:50%;box-shadow:0 0 8px var(--accent);}
+
+/* INPUTS */
+.input-group{margin-bottom:14px;}
+.input-group label{display:block;font-size:11px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;
+  font-family:'Share Tech Mono',monospace;}
+.input-group input[type=number],.input-group select{
+  width:100%;padding:10px 12px;background:var(--panel2);
+  border:1px solid var(--border);border-radius:6px;
+  color:var(--text);font-family:'Share Tech Mono',monospace;font-size:13px;outline:none;
+  transition:border 0.2s;min-height:44px;}
+.input-group input:focus,.input-group select:focus{border-color:var(--accent);}
+.input-group select option{background:var(--panel2);}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.unit{font-size:9px;color:var(--muted);margin-top:4px;font-family:'Share Tech Mono',monospace;line-height:1.45;}
+
+/* MODE SELECTOR */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.mode-btn{padding:11px 8px;border-radius:8px;border:1px solid var(--border);
+  background:var(--panel2);color:var(--muted);font-family:'Orbitron',monospace;
+  font-size:10px;font-weight:600;cursor:pointer;transition:all 0.2s;text-align:center;min-height:44px;}
+.mode-btn.active-te{border-color:var(--te);color:var(--te);background:rgba(0,255,204,0.08);}
+.mode-btn.active-tm{border-color:var(--tm);color:var(--tm);background:rgba(255,107,53,0.08);}
+
+/* CALC BUTTON */
+.calc-btn{width:100%;padding:12px;border:none;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),rgba(0,255,204,0.8));
+  color:#000;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;
+  cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s;margin-top:6px;min-height:44px;}
+.calc-btn:active{transform:scale(0.98);}
+
+/* RESULTS GRID */
+.results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px;}
+.result-card{background:var(--panel2);border:1px solid var(--border);
+  border-radius:8px;padding:10px;text-align:center;}
+.result-card.highlight{border-color:var(--accent);}
+.result-label{font-size:9px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:1px;margin-bottom:4px;font-family:'Share Tech Mono',monospace;}
+.result-val{font-size:16px;font-weight:700;color:var(--accent);
+  font-family:'Share Tech Mono',monospace;}
+.result-unit{font-size:9px;color:var(--muted);}
+
+/* STATUS */
+.status-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;
+  border-radius:6px;margin-top:10px;font-size:11px;font-family:'Share Tech Mono',monospace;line-height:1.45;}
+.status-bar.propagate{background:rgba(0,255,204,0.08);border:1px solid var(--te);color:var(--te);}
+.status-bar.evanescent{background:rgba(255,107,53,0.08);border:1px solid var(--tm);color:var(--tm);}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* CANVAS AREA */
+.viz-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.viz-tab{padding:8px 12px;border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-family:'Share Tech Mono',monospace;
+  font-size:10px;cursor:pointer;transition:all 0.2s;letter-spacing:1px;min-height:38px;}
+.viz-tab.active{background:rgba(0,170,255,0.12);border-color:var(--accent);color:var(--accent);}
+canvas{width:100%;height:clamp(230px,48vw,340px);border-radius:8px;background:#020810;border:1px solid var(--border);display:block;}
+
+/* MODE TABLE */
+.mode-table-wrap{margin-top:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;font-size:11px;min-width:520px;}
+th{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;
+  color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);
+  text-align:left;text-transform:uppercase;white-space:nowrap;}
+td{padding:6px 8px;border-bottom:1px solid rgba(26,58,92,0.5);
+  font-family:'Share Tech Mono',monospace;font-size:11px;white-space:nowrap;}
+tr:hover td{background:rgba(0,170,255,0.03);}
+.te-mode{color:var(--te);}
+.tm-mode{color:var(--tm);}
+.prop{color:var(--a2);}
+.evan{color:var(--a3);}
+.dominant{background:rgba(0,170,255,0.06)!important;}
+
+/* FORMULA BOX */
+.formula-box{background:var(--panel2);border:1px solid var(--border);
+  border-radius:8px;padding:12px;margin-top:10px;
+  font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);line-height:1.9;}
+.formula-box strong{color:var(--accent);}
+.formula-box .eq{color:var(--text);margin:2px 0;}
+
+footer{text-align:center;font-size:10px;color:var(--muted);
+  padding:20px 0 0;font-family:'Share Tech Mono',monospace;border-top:1px solid var(--border);margin-top:24px;line-height:1.5;}
+
+@media(max-width:560px){
+  .panel{padding:12px;}
+  .input-row{grid-template-columns:1fr;gap:8px;}
+  .mode-grid{grid-template-columns:1fr;}
+  .results-grid{grid-template-columns:1fr;}
+  header{padding:12px 0 16px;}
+  .badge{font-size:8px;letter-spacing:1px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>⬡ Waveguide Mode Analyzer</h1>
+  <p>231EC44 Networks & Transmission Lines · Unit 5 · CO6</p>
+  <div class="badge">TE &amp; TM MODE ANALYSIS · RECTANGULAR WAVEGUIDE</div>
+</header>
+
+<div class="main-grid">
+  <div>
+    <div class="panel">
+      <div class="panel-title">Waveguide Dimensions</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Width a (mm)</label>
+          <input type="number" id="wg_a" value="22.86" min="1" step="0.01"/>
+          <div class="unit">WR-90 standard: 22.86mm</div>
+        </div>
+        <div class="input-group">
+          <label>Height b (mm)</label>
+          <input type="number" id="wg_b" value="10.16" min="1" step="0.01"/>
+          <div class="unit">WR-90 standard: 10.16mm</div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Operating Frequency (GHz)</label>
+        <input type="number" id="freq" value="10" min="0.1" step="0.1"/>
+      </div>
+      <div class="input-group">
+        <label>Medium (relative permittivity εr)</label>
+        <input type="number" id="er" value="1" min="1" step="0.1"/>
+        <div class="unit">Air = 1.0, PTFE ≈ 2.1</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:12px;">
+      <div class="panel-title">Mode Selection</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>m index</label>
+          <input type="number" id="mode_m" value="1" min="0" max="5" step="1"/>
+        </div>
+        <div class="input-group">
+          <label>n index</label>
+          <input type="number" id="mode_n" value="0" min="0" max="5" step="1"/>
+        </div>
+      </div>
+      <div class="mode-grid">
+        <button class="mode-btn active-te" id="btn_te" onclick="setMode('TE')">TE Mode</button>
+        <button class="mode-btn" id="btn_tm" onclick="setMode('TM')">TM Mode</button>
+      </div>
+      <button class="calc-btn" onclick="analyze()">▶ ANALYZE</button>
+
+      <div class="results-grid" id="resultsGrid">
+        <div class="result-card highlight"><div class="result-label">Cutoff Freq</div><div class="result-val" id="r_fc">—</div><div class="result-unit">GHz</div></div>
+        <div class="result-card"><div class="result-label">Cutoff λ</div><div class="result-val" id="r_lc">—</div><div class="result-unit">mm</div></div>
+        <div class="result-card"><div class="result-label">Phase Vel</div><div class="result-val" id="r_vp">—</div><div class="result-unit">× 10⁸ m/s</div></div>
+        <div class="result-card"><div class="result-label">Group Vel</div><div class="result-val" id="r_vg">—</div><div class="result-unit">× 10⁸ m/s</div></div>
+        <div class="result-card"><div class="result-label">Guide λ</div><div class="result-val" id="r_lg">—</div><div class="result-unit">mm</div></div>
+        <div class="result-card"><div class="result-label">Wave Imp</div><div class="result-val" id="r_zw">—</div><div class="result-unit">Ω</div></div>
+      </div>
+      <div class="status-bar" id="statusBar" style="display:none"></div>
+    </div>
+
+    <div class="panel" style="margin-top:12px;">
+      <div class="panel-title">Key Formulas</div>
+      <div class="formula-box">
+        <div class="eq"><strong>fc(m,n)</strong> = c/(2√εr) · √[(m/a)² + (n/b)²]</div>
+        <div class="eq"><strong>λg</strong> = λ₀ / √[1−(fc/f)²]</div>
+        <div class="eq"><strong>vp</strong> = c / √[1−(fc/f)²]</div>
+        <div class="eq"><strong>vg</strong> = c · √[1−(fc/f)²]</div>
+        <div class="eq"><strong>ZTE</strong> = η / √[1−(fc/f)²]</div>
+        <div class="eq"><strong>ZTM</strong> = η · √[1−(fc/f)²]</div>
+        <div class="eq" style="margin-top:6px;color:#4a7a9b;">vp · vg = c² (always)</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <div class="panel-title">Visualization</div>
+      <div class="viz-tabs">
+        <button class="viz-tab active" onclick="setViz('field',this)">Field Pattern</button>
+        <button class="viz-tab" onclick="setViz('dispersion',this)">Dispersion</button>
+        <button class="viz-tab" onclick="setViz('modes',this)">Mode Chart</button>
+      </div>
+      <canvas id="mainCanvas"></canvas>
+    </div>
+
+    <div class="panel" style="margin-top:12px;">
+      <div class="panel-title">Mode Cutoff Frequencies (First 12 Modes)</div>
+      <div class="mode-table-wrap">
+        <table id="modeTable">
+          <thead><tr>
+            <th>Mode</th><th>m</th><th>n</th>
+            <th>fc (GHz)</th><th>λc (mm)</th><th>Status</th>
+          </tr></thead>
+          <tbody id="modeBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<footer>PSR Engineering College · 231EC44 NTL · Unit 5 · Waveguide Mode Analyzer</footer>
+</div>
+
+<script>
+const C=2.998e8, ETA0=376.73;
+let currentMode='TE', currentViz='field';
+let lastResult=null;
+
+function setMode(m){
+  currentMode=m;
+  document.getElementById('btn_te').className='mode-btn'+(m==='TE'?' active-te':'');
+  document.getElementById('btn_tm').className='mode-btn'+(m==='TM'?' active-tm':'');
+}
+
+function setViz(v,btn){
+  currentViz=v;
+  document.querySelectorAll('.viz-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(lastResult) drawViz();
+  else if(v==='modes') drawModeChart();
+}
+
+function calcMode(a,b,f,er,m,n){
+  const fc = (C/(2*Math.sqrt(er)))*Math.sqrt((m/a)**2+(n/b)**2)/1e9;
+  const lc = 2/Math.sqrt((m/a)**2+(n/b)**2)*1000;
+  const f_GHz=f;
+  if(f_GHz<=fc) return {fc,lc,propagates:false};
+  const lambda0=(C/(f_GHz*1e9))*1000;
+  const ratio=fc/f_GHz;
+  const sq=Math.sqrt(1-ratio**2);
+  const lg=lambda0/sq;
+  const vp=(C*1e-8)/sq;
+  const vg=(C*1e-8)*sq;
+  const eta=ETA0/Math.sqrt(er);
+  const zw=currentMode==='TE'?eta/sq:eta*sq;
+  return{fc,lc,propagates:true,lg,vp,vg,zw,sq,lambda0,f_GHz,ratio};
+}
+
+function analyze(){
+  const a=+document.getElementById('wg_a').value/1000;
+  const b=+document.getElementById('wg_b').value/1000;
+  const f=+document.getElementById('freq').value;
+  const er=+document.getElementById('er').value;
+  const m=+document.getElementById('mode_m').value;
+  const n=+document.getElementById('mode_n').value;
+
+  if(currentMode==='TM'&&(m===0||n===0)){
+    document.getElementById('statusBar').style.display='flex';
+    document.getElementById('statusBar').className='status-bar evanescent';
+    document.getElementById('statusBar').innerHTML='<div class="status-dot" style="background:#ff6b35"></div>TM(m,0) and TM(0,n) modes do not exist — Ez must be zero on all walls';
+    ['r_fc','r_lc','r_vp','r_vg','r_lg','r_zw'].forEach(id=>document.getElementById(id).textContent='N/A');
+    return;
+  }
+
+  const res=calcMode(a,b,f,er,m,n);
+  lastResult={...res,a,b,f,er,m,n,mode:currentMode};
+
+  document.getElementById('r_fc').textContent=res.fc.toFixed(3);
+  document.getElementById('r_lc').textContent=res.lc.toFixed(2);
+
+  const sb=document.getElementById('statusBar');
+  sb.style.display='flex';
+  if(!res.propagates){
+    sb.className='status-bar evanescent';
+    sb.innerHTML=`<div class="status-dot" style="background:#ff6b35"></div>EVANESCENT — f (${f} GHz) < fc (${res.fc.toFixed(3)} GHz). Mode does not propagate.`;
+    ['r_vp','r_vg','r_lg','r_zw'].forEach(id=>document.getElementById(id).textContent='—');
+  } else {
+    sb.className='status-bar propagate';
+    sb.innerHTML=`<div class="status-dot" style="background:#00ffcc;box-shadow:0 0 6px #00ffcc"></div>PROPAGATING — f (${f} GHz) > fc (${res.fc.toFixed(3)} GHz). Mode propagates.`;
+    document.getElementById('r_vp').textContent=res.vp.toFixed(3);
+    document.getElementById('r_vg').textContent=res.vg.toFixed(3);
+    document.getElementById('r_lg').textContent=res.lg.toFixed(2);
+    document.getElementById('r_zw').textContent=res.zw.toFixed(1);
+  }
+
+  buildModeTable(a,b,f,er);
+  drawViz();
+}
+
+function buildModeTable(a,b,f,er){
+  const modes=[];
+  for(let m=0;m<=4;m++) for(let n=0;n<=3;n++){
+    if(m===0&&n===0) continue;
+    const fc=(C/(2*Math.sqrt(er)))*Math.sqrt((m/a)**2+(n/b)**2)/1e9;
+    const lc=2/Math.sqrt((m/a)**2+(n/b)**2)*1000;
+    modes.push({m,n,fc,lc,prop:f>fc});
+  }
+  modes.sort((x,y)=>x.fc-y.fc);
+  const top=modes.slice(0,12);
+  const tb=document.getElementById('modeBody');
+  tb.innerHTML='';
+  top.forEach((mo,i)=>{
+    const isDom=i===0;
+    const tr=document.createElement('tr');
+    if(isDom) tr.classList.add('dominant');
+    tr.innerHTML=`
+      <td><span class="te-mode">TE${mo.m}${mo.n}</span>${(mo.m!==0&&mo.n!==0)?`/<span class="tm-mode">TM${mo.m}${mo.n}</span>`:''}</td>
+      <td>${mo.m}</td><td>${mo.n}</td>
+      <td>${mo.fc.toFixed(3)}</td>
+      <td>${mo.lc.toFixed(2)}</td>
+      <td><span class="${mo.prop?'prop':'evan'}">${mo.prop?'▶ PROP':'✗ EVAN'}</span></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function prepareCanvas(){
+  const canvas=document.getElementById('mainCanvas');
+  const dpr=window.devicePixelRatio||1;
+  const W=Math.max(280,Math.floor(canvas.clientWidth||600));
+  const H=Math.max(220,Math.floor(canvas.clientHeight||320));
+  canvas.width=W*dpr;
+  canvas.height=H*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#020810';ctx.fillRect(0,0,W,H);
+  return {ctx,W,H};
+}
+
+function drawViz(){
+  if(currentViz==='field') drawField();
+  else if(currentViz==='dispersion') drawDispersion();
+  else drawModeChart();
+}
+
+function drawField(){
+  const {ctx,W,H}=prepareCanvas();
+  if(!lastResult) return;
+  const {m,n,mode,a,b,propagates}=lastResult;
+
+  const pad=Math.max(22,Math.min(34,W*0.05));
+  const wgW=W-2*pad;
+  const wgH=H-2*pad-18;
+  ctx.strokeStyle='rgba(0,170,255,0.6)';ctx.lineWidth=2;
+  ctx.strokeRect(pad,pad,wgW,wgH);
+  ctx.fillStyle='rgba(0,170,255,0.04)';ctx.fillRect(pad,pad,wgW,wgH);
+
+  ctx.fillStyle='rgba(0,170,255,0.6)';ctx.font='10px Share Tech Mono';
+  ctx.fillText(`a = ${(a*1000).toFixed(2)} mm`,pad,H-8);
+  ctx.save();ctx.translate(12,pad+wgH/2);ctx.rotate(-Math.PI/2);
+  ctx.fillText(`b = ${(b*1000).toFixed(2)} mm`,0,0);ctx.restore();
+
+  const cols=76,rows=38;
+  const color=mode==='TE'?'rgba(0,255,204,':'rgba(255,107,53,';
+
+  if(!propagates){
+    ctx.fillStyle='rgba(255,107,53,0.5)';
+    ctx.font='bold 13px Orbitron';ctx.textAlign='center';
+    ctx.fillText('EVANESCENT — NO PROPAGATION',W/2,H/2);
+    ctx.font='11px Share Tech Mono';ctx.fillStyle='#4a7a9b';
+    ctx.fillText(`fc = ${lastResult.fc.toFixed(3)} GHz > f = ${lastResult.f} GHz`,W/2,H/2+20);
+    ctx.textAlign='left';return;
+  }
+
+  for(let i=0;i<=cols;i++){
+    for(let j=0;j<=rows;j++){
+      const x=pad+i*(wgW/cols);
+      const y=pad+j*(wgH/rows);
+      const nx=i/cols,ny=j/rows;
+      let Ex=0,Ey=0;
+      if(mode==='TE'){
+        if(m===1&&n===0){
+          Ey=Math.sin(Math.PI*nx);
+        } else {
+          Ey=Math.sin(m*Math.PI*nx)*Math.cos(n*Math.PI*ny);
+          Ex=-Math.cos(m*Math.PI*nx)*Math.sin(n*Math.PI*ny);
+        }
+      } else {
+        Ex=Math.cos(m*Math.PI*nx)*Math.sin(n*Math.PI*ny);
+        Ey=Math.sin(m*Math.PI*nx)*Math.cos(n*Math.PI*ny);
+      }
+      const mag=Math.sqrt(Ex**2+Ey**2);
+      if(mag<0.05) continue;
+      const alpha=Math.min(1,mag*1.2);
+      const len=5.5*mag;
+      const angle=Math.atan2(Ey,Ex);
+      ctx.strokeStyle=`${color}${alpha})`;
+      ctx.lineWidth=1.15;
+      ctx.beginPath();
+      ctx.moveTo(x-Math.cos(angle)*len/2,y-Math.sin(angle)*len/2);
+      ctx.lineTo(x+Math.cos(angle)*len/2,y+Math.sin(angle)*len/2);
+      ctx.stroke();
+      ctx.beginPath();
+      const ax=x+Math.cos(angle)*len/2,ay=y+Math.sin(angle)*len/2;
+      ctx.moveTo(ax,ay);
+      ctx.lineTo(ax-Math.cos(angle-0.4)*2.8,ay-Math.sin(angle-0.4)*2.8);
+      ctx.lineTo(ax-Math.cos(angle+0.4)*2.8,ay-Math.sin(angle+0.4)*2.8);
+      ctx.closePath();ctx.fillStyle=`${color}${alpha})`;ctx.fill();
+    }
+  }
+
+  ctx.fillStyle=mode==='TE'?'rgba(0,255,204,0.9)':'rgba(255,107,53,0.9)';
+  ctx.font='bold 12px Orbitron';ctx.textAlign='right';
+  ctx.fillText(`${mode}${m}${n} Field Pattern`,W-pad-4,pad-6);
+  ctx.textAlign='left';
+}
+
+function drawDispersion(){
+  const {ctx,W,H}=prepareCanvas();
+  if(!lastResult) return;
+  const {fc,f}=lastResult;
+  const pad=Math.max(35,Math.min(46,W*0.08));
+  const fMax=Math.max(f*1.6,fc*2);
+
+  ctx.strokeStyle='rgba(0,170,255,0.06)';ctx.lineWidth=1;
+  for(let i=0;i<=8;i++){
+    const x=pad+i*(W-2*pad)/8;
+    ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,H-pad);ctx.stroke();
+  }
+  for(let i=0;i<=5;i++){
+    const y=pad+i*(H-2*pad)/5;
+    ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();
+  }
+
+  ctx.strokeStyle='rgba(0,170,255,0.3)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(pad,pad);ctx.lineTo(pad,H-pad);ctx.lineTo(W-pad,H-pad);ctx.stroke();
+
+  const fcX=pad+(fc/fMax)*(W-2*pad);
+  ctx.strokeStyle='rgba(255,107,53,0.5)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(fcX,pad);ctx.lineTo(fcX,H-pad);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,107,53,0.7)';ctx.font='9px Share Tech Mono';
+  ctx.fillText(`fc=${fc.toFixed(2)}`,fcX+3,pad+12);
+
+  const opX=pad+(f/fMax)*(W-2*pad);
+  ctx.strokeStyle='rgba(255,215,0,0.4)';ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(opX,pad);ctx.lineTo(opX,H-pad);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,215,0,0.7)';
+  ctx.fillText(`f=${f}`,opX+3,pad+24);
+
+  const pts=200;
+  ctx.beginPath();ctx.strokeStyle='#00ffcc';ctx.lineWidth=2.5;
+  for(let i=0;i<=pts;i++){
+    const fi=fc+(fMax-fc)*(i/pts);
+    const beta=(2*Math.PI*fi*1e9/C)*Math.sqrt(1-(fc/fi)**2)/(2*Math.PI)*1000;
+    const bMax=(2*Math.PI*fMax*1e9/C)/(2*Math.PI)*1000;
+    const x=pad+(fi/fMax)*(W-2*pad);
+    const y=(H-pad)-(beta/bMax)*(H-2*pad);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  ctx.beginPath();ctx.strokeStyle='rgba(0,170,255,0.3)';ctx.lineWidth=1;ctx.setLineDash([6,3]);
+  ctx.moveTo(pad,H-pad);ctx.lineTo(W-pad,pad);ctx.stroke();ctx.setLineDash([]);
+
+  ctx.fillStyle='#00ffcc';ctx.font='10px Share Tech Mono';
+  ctx.fillText('β (phase constant)',pad+6,pad+14);
+  ctx.fillStyle='rgba(0,170,255,0.5)';
+  ctx.fillText('Light line (free space)',W-pad-130,pad+14);
+  ctx.fillStyle='rgba(0,170,255,0.5)';ctx.font='9px Share Tech Mono';
+  ctx.fillText('f (GHz) →',W-pad-40,H-pad+14);
+  ctx.save();ctx.translate(14,H/2);ctx.rotate(-Math.PI/2);
+  ctx.fillText('β (rad/m) →',0,0);ctx.restore();
+}
+
+function drawModeChart(){
+  const {ctx,W,H}=prepareCanvas();
+
+  const a=+document.getElementById('wg_a').value/1000;
+  const b=+document.getElementById('wg_b').value/1000;
+  const f=+document.getElementById('freq').value;
+  const er=+document.getElementById('er').value;
+
+  const modes=[];
+  for(let m=0;m<=4;m++) for(let n=0;n<=3;n++){
+    if(m===0&&n===0) continue;
+    const fc=(C/(2*Math.sqrt(er)))*Math.sqrt((m/a)**2+(n/b)**2)/1e9;
+    modes.push({m,n,fc});
+  }
+  modes.sort((x,y)=>x.fc-y.fc);
+  const top=modes.slice(0,10);
+  const fMax=Math.max(f*1.3,top[top.length-1].fc*1.1);
+  const pad=Math.max(30,Math.min(42,W*0.07));
+
+  ctx.strokeStyle='rgba(0,170,255,0.2)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,H-pad);ctx.lineTo(W-20,H-pad);ctx.stroke();
+
+  const opX=pad+(f/fMax)*(W-pad-20);
+  ctx.strokeStyle='rgba(255,215,0,0.5)';ctx.lineWidth=2;ctx.setLineDash([5,3]);
+  ctx.beginPath();ctx.moveTo(opX,20);ctx.lineTo(opX,H-pad);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,215,0,0.8)';ctx.font='9px Share Tech Mono';
+  ctx.fillText(`f=${f}GHz`,opX+3,28);
+
+  const rowH=(H-pad-30)/top.length;
+  top.forEach((mo,i)=>{
+    const y=28+i*rowH+rowH/2;
+    const fcX=pad+(mo.fc/fMax)*(W-pad-20);
+    const prop=f>mo.fc;
+
+    ctx.fillStyle=prop?'rgba(0,255,204,0.08)':'rgba(255,107,53,0.06)';
+    ctx.fillRect(pad,y-rowH/2+2,fcX-pad,rowH-4);
+
+    ctx.beginPath();
+    ctx.arc(fcX,y,4,0,2*Math.PI);
+    ctx.fillStyle=prop?'#00ffcc':'#ff6b35';
+    ctx.fill();
+
+    ctx.fillStyle=prop?'rgba(0,255,204,0.9)':'rgba(255,107,53,0.7)';
+    ctx.font='9px Orbitron';
+    ctx.fillText(`TE${mo.m}${mo.n}`,pad+3,y+3);
+
+    ctx.fillStyle='rgba(0,170,255,0.6)';ctx.font='8px Share Tech Mono';
+    ctx.fillText(`${mo.fc.toFixed(2)}GHz`,fcX+6,y+3);
+  });
+
+  ctx.fillStyle='rgba(0,170,255,0.5)';ctx.font='9px Share Tech Mono';
+  ctx.fillText('fc (GHz) →',W-80,H-pad+14);
+  ctx.fillText('◀ propagates at operating frequency',pad+4,H-8);
+}
+
+window.addEventListener('load',()=>{
+  buildModeTable(22.86e-3,10.16e-3,10,1);
+  analyze();
+});
+window.addEventListener('resize',()=>{if(lastResult)drawViz();});
+</script>
+</body>
+</html>
